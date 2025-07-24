@@ -121,7 +121,7 @@
 <body>
 
  <audio id="bgMusic" loop>
-        <source src="music/background-music.mp3" type="audio/mpeg">
+        <source src="music/saund_statistik.mp3" type="audio/mpeg">
         Ваш браузер не поддерживает аудио элемент.
     </audio>
     
@@ -230,6 +230,44 @@
                 document.querySelector('.orientation-warning').style.display = 'none';
             }
         });
+
+ // Управление музыкой
+        const bgMusic = document.getElementById('bgMusic');
+        const musicToggle = document.getElementById('musicToggle');
+        const musicIcon = document.getElementById('musicIcon');
+        let isMusicPlaying = false;
+        
+        // Попытка автоматического воспроизведения музыки
+        function initMusic() {
+            // В современных браузерах autoplay работает только если muted
+            bgMusic.muted = false;
+            const playPromise = bgMusic.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(_ => {
+                    isMusicPlaying = true;
+                    musicIcon.src = 'image/volume-on.png';
+                })
+                .catch(error => {
+                    isMusicPlaying = false;
+                    musicIcon.src = 'image/volume-off.png';
+                    console.log("Автовоспроизведение заблокировано:", error);
+                });
+            }
+        }
+        
+        // Переключение музыки по клику
+        musicToggle.addEventListener('click', () => {
+            if (isMusicPlaying) {
+                bgMusic.pause();
+                musicIcon.src = 'image/volume-off.png';
+            } else {
+                bgMusic.play();
+                musicIcon.src = 'image/volume-on.png';
+            }
+            isMusicPlaying = !isMusicPlaying;
+        });
+        
     </script>
 </body>
 </html>
