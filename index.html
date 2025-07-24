@@ -98,10 +98,33 @@
             margin-bottom: 20px;
             color: #fff;
         }
+        
+        .music-control {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 100;
+        }
+        
+        .music-control img {
+            width: 60%;
+            height: 60%;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="music-control" id="musicToggle">
+            <img src="image/volume-on.png" alt="Музыка" id="musicIcon">
+        </div>
         <img src="image/player.png" alt="Логотип" class="logo">
         <div class="btn" onclick="window.location.href='game.html'">Играть</div>
         <div class="btn" onclick="window.location.href='stats.html'">Статистика</div>
@@ -112,12 +135,55 @@
         <p>Пожалуйста, поверните устройство в горизонтальное положение</p>
     </div>
     
+    <!-- Аудио элемент для фоновой музыки -->
+    <audio id="bgMusic" loop>
+        <source src="audio/background-music.mp3" type="audio/mpeg">
+        Ваш браузер не поддерживает аудио элемент.
+    </audio>
+    
     <script>
         function lockOrientation() {
             if (screen.orientation && screen.orientation.lock) {
                 screen.orientation.lock('landscape').catch(e => console.log(e));
             }
         }
+        
+        // Управление музыкой
+        const bgMusic = document.getElementById('bgMusic');
+        const musicToggle = document.getElementById('musicToggle');
+        const musicIcon = document.getElementById('musicIcon');
+        let isMusicPlaying = false;
+        
+        // Попытка автоматического воспроизведения музыки
+        function initMusic() {
+            // В современных браузерах autoplay работает только если muted
+            bgMusic.muted = false;
+            const playPromise = bgMusic.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(_ => {
+                    isMusicPlaying = true;
+                    musicIcon.src = 'image/volume-on.png';
+                })
+                .catch(error => {
+                    isMusicPlaying = false;
+                    musicIcon.src = 'image/volume-off.png';
+                    console.log("Автовоспроизведение заблокировано:", error);
+                });
+            }
+        }
+        
+        // Переключение музыки по клику
+        musicToggle.addEventListener('click', () => {
+            if (isMusicPlaying) {
+                bgMusic.pause();
+                musicIcon.src = 'image/volume-off.png';
+            } else {
+                bgMusic.play();
+                musicIcon.src = 'image/volume-on.png';
+            }
+            isMusicPlaying = !isMusicPlaying;
+        });
         
         window.addEventListener('load', () => {
             if (window.innerHeight > window.innerWidth) {
@@ -135,6 +201,9 @@
                     totalGames: 0
                 }));
             }
+            
+            // Инициализация музыки после загрузки страницы
+            initMusic();
         });
         
         window.addEventListener('resize', () => {
