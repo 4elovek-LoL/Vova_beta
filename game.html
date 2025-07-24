@@ -155,11 +155,13 @@
             color: white;
             z-index: 50;
         }
+        
+        /* Кнопки управления - только для мобильных устройств */
         .control-btn {
             position: absolute;
             background-color: rgba(255, 255, 255, 0.2);
             border-radius: 50%;
-            display: flex;
+            display: none; /* По умолчанию скрыты */
             justify-content: center;
             align-items: center;
             color: white;
@@ -192,7 +194,6 @@
             width: 100px;
             height: 100px;
             font-size: 32px;
-          
         }
         
         /* Кнопка усиления (теперь справа от кнопки стрельбы) */
@@ -212,7 +213,7 @@
             width: 80px;
             height: 80px;
             font-size: 24px;
-            background: black
+            background: black;
             color: #333;
         }
         
@@ -230,6 +231,13 @@
                 width: 70px;
                 height: 70px;
                 font-size: 20px;
+            }
+        }
+        
+        /* Показываем кнопки только на мобильных устройствах */
+        @media (hover: none) and (pointer: coarse) {
+            .control-btn {
+                display: flex;
             }
         }
     </style>
@@ -271,6 +279,7 @@
             <div class="resumeBtn" onclick="resumeGame()">Продолжить</div>
         </div>
         
+        <!-- Кнопки управления будут видны только на мобильных устройствах -->
         <div class="control-btn" id="leftBtn">←</div>
         <div class="control-btn" id="rightBtn">→</div>
         <div class="control-btn" id="shootBtn">⚡</div>
@@ -644,28 +653,28 @@
         }
 
         function resumeGame() {
-    paused = false;
-    if (audio.background) {
-        audio.background.play().catch(e => console.log("Background music error:", e));
-    }
-    document.getElementById('pauseScreen').style.display = 'none';
-    
-    // Перезапускаем игровой цикл
-    if (!gameOverFlag) {
-        let lastTime = performance.now();
-        function gameLoop(timestamp) {
-            if (!paused && !gameOverFlag) {
-                const deltaTime = timestamp - lastTime;
-                lastTime = timestamp;
-                
-                update(deltaTime);
-                render();
+            paused = false;
+            if (audio.background) {
+                audio.background.play().catch(e => console.log("Background music error:", e));
+            }
+            document.getElementById('pauseScreen').style.display = 'none';
+            
+            // Перезапускаем игровой цикл
+            if (!gameOverFlag) {
+                let lastTime = performance.now();
+                function gameLoop(timestamp) {
+                    if (!paused && !gameOverFlag) {
+                        const deltaTime = timestamp - lastTime;
+                        lastTime = timestamp;
+                        
+                        update(deltaTime);
+                        render();
+                        animationFrameId = requestAnimationFrame(gameLoop);
+                    }
+                }
                 animationFrameId = requestAnimationFrame(gameLoop);
             }
         }
-        animationFrameId = requestAnimationFrame(gameLoop);
-    }
-}
 
         function spawnObjects() {
             if (difficultyTimer > 0 && difficultyTimer % (FPS * 30) === 0) {
@@ -833,79 +842,82 @@
         }
 
         function setupControls() {
-            const leftBtn = document.getElementById('leftBtn');
-            const rightBtn = document.getElementById('rightBtn');
-            const shootBtn = document.getElementById('shootBtn');
-            const powerBtn = document.getElementById('powerBtn');
-            const pauseBtn = document.getElementById('pauseBtn');
+            // Настраиваем кнопки управления только для мобильных устройств
+            if (isMobile || isTablet) {
+                const leftBtn = document.getElementById('leftBtn');
+                const rightBtn = document.getElementById('rightBtn');
+                const shootBtn = document.getElementById('shootBtn');
+                const powerBtn = document.getElementById('powerBtn');
+                const pauseBtn = document.getElementById('pauseBtn');
 
-            const setupButton = (element, action) => {
-                element.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    action(true);
-                });
-                
-                element.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    action(false);
-                });
-                
-                element.addEventListener('mousedown', (e) => {
-                    e.preventDefault();
-                    action(true);
-                });
-                
-                element.addEventListener('mouseup', (e) => {
-                    e.preventDefault();
-                    action(false);
-                });
-                
-                element.addEventListener('mouseleave', (e) => {
-                    e.preventDefault();
-                    action(false);
-                });
-            };
+                const setupButton = (element, action) => {
+                    element.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        action(true);
+                    });
+                    
+                    element.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        action(false);
+                    });
+                    
+                    element.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        action(true);
+                    });
+                    
+                    element.addEventListener('mouseup', (e) => {
+                        e.preventDefault();
+                        action(false);
+                    });
+                    
+                    element.addEventListener('mouseleave', (e) => {
+                        e.preventDefault();
+                        action(false);
+                    });
+                };
 
-            setupButton(leftBtn, (state) => { controls.left = state; });
-            setupButton(rightBtn, (state) => { controls.right = state; });
-            
-            shootBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                shoot();
-            });
-            
-            shootBtn.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                shoot();
-            });
-            
-            powerBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                activatePowerUp();
-            });
-            
-            powerBtn.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                activatePowerUp();
-            });
-            
-            pauseBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                if (paused) {
-                    resumeGame();
-                } else {
-                    pauseGame();
-                }
-            });
-            
-            pauseBtn.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                if (paused) {
-                    resumeGame();
-                } else {
-                    pauseGame();
-                }
-            });
+                setupButton(leftBtn, (state) => { controls.left = state; });
+                setupButton(rightBtn, (state) => { controls.right = state; });
+                
+                shootBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    shoot();
+                });
+                
+                shootBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    shoot();
+                });
+                
+                powerBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    activatePowerUp();
+                });
+                
+                powerBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    activatePowerUp();
+                });
+                
+                pauseBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (paused) {
+                        resumeGame();
+                    } else {
+                        pauseGame();
+                    }
+                });
+                
+                pauseBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    if (paused) {
+                        resumeGame();
+                    } else {
+                        pauseGame();
+                    }
+                });
+            }
         }
 
         function loadAssets() {
@@ -1012,9 +1024,7 @@
             bossSpeed = gameHeight * 0.003;
             bulletSpeed = gameHeight * 0.01;
             
-            if (isMobile || isTablet) {
-                setupControls();
-            }
+            setupControls();
         }
 
         function startGame() {
@@ -1194,299 +1204,299 @@
             updateBullets();
         }
 
-      function render() {
-    ctx.clearRect(0, 0, gameWidth, gameHeight);
-    
-    if (textures.background) {
-        ctx.imageSmoothingEnabled = true;
-        ctx.webkitImageSmoothingEnabled = true;
-        ctx.mozImageSmoothingEnabled = true;
-        ctx.drawImage(textures.background, 0, 0, gameWidth, gameHeight);
-    }
-    
-    if (warningTimer > 0) {
-        ctx.fillStyle = 'red';
-        ctx.font = `${gameHeight * 0.05}px Arial`;
-        const text = "ПРИБЛИЖАЕТСЯ БОСС!";
-        ctx.fillText(
-            text,
-            gameWidth / 2 - ctx.measureText(text).width / 2,
-            gameHeight / 2
-        );
-        
-        if (warningTimer % 20 < 10) {
-            ctx.strokeStyle = 'red';
-            ctx.lineWidth = 10;
-            ctx.strokeRect(0, 0, gameWidth, gameHeight);
-        }
-    }
-    
-    if (bossActive && warningTimer <= 0 && textures.boss) {
-        ctx.imageSmoothingEnabled = true;
-        ctx.webkitImageSmoothingEnabled = true;
-        ctx.mozImageSmoothingEnabled = true;
-        ctx.drawImage(
-            textures.boss,
-            bossPos.x,
-            bossPos.y,
-            bossSize,
-            bossSize * 1.5
-        );
-        
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(
-            bossPos.x - 5,
-            bossPos.y - 25,
-            bossSize + 10,
-            20
-        );
-        
-        const healthWidth = (bossSize * bossHealth) / bossMaxHealth;
-        ctx.fillStyle = bossHealth > bossMaxHealth * 0.5 ? 'lime' : 
-                        bossHealth > bossMaxHealth * 0.25 ? 'yellow' : 'red';
-        ctx.fillRect(
-            bossPos.x,
-            bossPos.y - 20,
-            healthWidth,
-            10
-        );
-        
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 14px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(
-            `${bossHealth}/${bossMaxHealth}`,
-            bossPos.x + bossSize/2,
-            bossPos.y - 10
-        );
-        ctx.textAlign = 'left';
-    }
-    
-    bullets.forEach(bullet => {
-        if (!bullet) return;
-        
-        const texture = bullet.powered ? textures.bulletPowered : textures.bullet;
-        if (texture) {
-            ctx.imageSmoothingEnabled = true;
-            ctx.webkitImageSmoothingEnabled = true;
-            ctx.mozImageSmoothingEnabled = true;
-            ctx.drawImage(
-                texture,
-                bullet.x,
-                bullet.y,
-                bullet.width,
-                bullet.height
-            );
-        }
-    });
-    
-    obstacles.forEach(obstacle => {
-        if (!obstacle || !textures.obstacle) return;
-        
-        ctx.imageSmoothingEnabled = true;
-        ctx.webkitImageSmoothingEnabled = true;
-        ctx.mozImageSmoothingEnabled = true;
-        ctx.drawImage(
-            textures.obstacle,
-            obstacle.x,
-            obstacle.y,
-            obstacleSize,
-            obstacleSize * 1.4
-        );
-    });
-    
-    coins.forEach(coin => {
-        if (!coin || !textures.coin) return;
-        
-        ctx.imageSmoothingEnabled = true;
-        ctx.webkitImageSmoothingEnabled = true;
-        ctx.mozImageSmoothingEnabled = true;
-        ctx.drawImage(
-            textures.coin,
-            coin.x,
-            coin.y,
-            coinSize,
-            coinSize * 1.4
-        );
-    });
-    
-    coins2.forEach(coin => {
-        if (!coin || !textures.coin2) return;
-        
-        ctx.imageSmoothingEnabled = true;
-        ctx.webkitImageSmoothingEnabled = true;
-        ctx.mozImageSmoothingEnabled = true;
-        ctx.drawImage(
-            textures.coin2,
-            coin.x,
-            coin.y,
-            coin2Size,
-            coin2Size * 1.4
-        );
-    });
-    
-    bonuses.forEach(bonus => {
-        if (!bonus || !textures.heart) return;
-        
-        ctx.imageSmoothingEnabled = true;
-        ctx.webkitImageSmoothingEnabled = true;
-        ctx.mozImageSmoothingEnabled = true;
-        ctx.drawImage(
-            textures.heart,
-            bonus.x,
-            bonus.y,
-            bonusSize,
-            bonusSize * 1.2
-        );
-    });
-    
-    let playerTexture;
-    const playerKey = `player${selectedCharacter}`;
-    const playerRedKey = `playerRed${selectedCharacter}`;
-    const playerGreenKey = `playerGreen${selectedCharacter}`;
-    const playerBlueKey = `playerBlue${selectedCharacter}`;
-    const playerBlueRedKey = `playerBlueRed${selectedCharacter}`;
-    const playerBlueGreenKey = `playerBlueGreen${selectedCharacter}`;
-    
-    if (damageTimer > 0) {
-        if (poweredUp) {
-            playerTexture = textures.player[playerBlueRedKey] || textures.player[playerKey];
-        } else {
-            playerTexture = textures.player[playerRedKey] || textures.player[playerKey];
-        }
-        damageTimer -= 1;
-    } else if (bonusTimer > 0) {
-        if (poweredUp) {
-            playerTexture = textures.player[playerBlueGreenKey] || textures.player[playerKey];
-        } else {
-            playerTexture = textures.player[playerGreenKey] || textures.player[playerKey];
-        }
-        bonusTimer -= 1;
-    } else if (poweredUp) {
-        playerTexture = textures.player[playerBlueKey] || textures.player[playerKey];
-    } else {
-        playerTexture = textures.player[playerKey];
-    }
-    
-    if (playerTexture) {
-        ctx.imageSmoothingEnabled = true;
-        ctx.webkitImageSmoothingEnabled = true;
-        ctx.mozImageSmoothingEnabled = true;
-        ctx.drawImage(
-            playerTexture,
-            playerPos.x,
-            playerPos.y,
-            playerSize,
-            playerSize * 1.5
-        );
-    }
-    
-    if (textures.heart) {
-        for (let i = 0; i < lives; i++) {
-            ctx.imageSmoothingEnabled = true;
-            ctx.webkitImageSmoothingEnabled = true;
-            ctx.mozImageSmoothingEnabled = true;
-            ctx.drawImage(
-                textures.heart,
-                10 + i * (gameWidth * 0.03),
-                gameHeight * 0.07,
-                lifeSize,
-                lifeSize * 1.2
-            );
-        }
-    }
-    
-    // Уровень сложности (всегда белый)
-    ctx.fillStyle = 'white';
-    ctx.font = `${gameHeight * 0.03}px Arial`;
-    const difficultyText = `Уровень сложности: ${1 + Math.floor(obstacleSpeedIncrease / 0.2)}`;
-    ctx.fillText(
-        difficultyText,
-        gameWidth - ctx.measureText(difficultyText).width - 10,
-        gameHeight * 0.05
-    );
-    
-    // Усиление и перезарядка (могут менять цвет)
-    if (poweredUp) {
-        ctx.fillStyle = 'cyan';
-        const powerText = `Усиление: ${Math.floor(powerUpTimer / FPS) + 1}с`;
-        ctx.fillText(
-            powerText,
-            gameWidth / 2 - ctx.measureText(powerText).width / 2,
-            gameHeight * 0.05
-        );
-    } else if (powerUpCooldown > 0) {
-        ctx.fillStyle = 'gray';
-        const cooldownText = `Перезарядка: ${Math.floor(powerUpCooldown / FPS) + 1}с`;
-        ctx.fillText(
-            cooldownText,
-            gameWidth / 2 - ctx.measureText(cooldownText).width / 2,
-            gameHeight * 0.05
-        );
-    }
-    
-    if (difficultyTimer < FPS * 5) {
-        ctx.fillStyle = 'white';
-        const controlsText = isMobile || isTablet
-            ? "Тап слева/справа: движение | Тап справа: стрельба" 
-            : "Стрелки: движение | Пробел: стрельба | SHIFT: усиление | ESC: пауза";
-        ctx.fillText(
-            controlsText,
-            gameWidth / 2 - ctx.measureText(controlsText).width / 2,
-            gameHeight - 50
-        );
-    }
-    
-    if (textures.heart) {
-        for (let i = lifeAnimations.length - 1; i >= 0; i--) {
-            const anim = lifeAnimations[i];
+        function render() {
+            ctx.clearRect(0, 0, gameWidth, gameHeight);
             
-            if (!anim) {
-                lifeAnimations.splice(i, 1);
-                continue;
+            if (textures.background) {
+                ctx.imageSmoothingEnabled = true;
+                ctx.webkitImageSmoothingEnabled = true;
+                ctx.mozImageSmoothingEnabled = true;
+                ctx.drawImage(textures.background, 0, 0, gameWidth, gameHeight);
             }
             
-            anim.alpha -= 17;
-            anim.timer -= 1;
+            if (warningTimer > 0) {
+                ctx.fillStyle = 'red';
+                ctx.font = `${gameHeight * 0.05}px Arial`;
+                const text = "ПРИБЛИЖАЕТСЯ БОСС!";
+                ctx.fillText(
+                    text,
+                    gameWidth / 2 - ctx.measureText(text).width / 2,
+                    gameHeight / 2
+                );
+                
+                if (warningTimer % 20 < 10) {
+                    ctx.strokeStyle = 'red';
+                    ctx.lineWidth = 10;
+                    ctx.strokeRect(0, 0, gameWidth, gameHeight);
+                }
+            }
             
-            ctx.save();
-            ctx.globalAlpha = Math.max(anim.alpha, 0) / 255;
-            ctx.drawImage(
-                anim.image,
-                anim.x,
-                anim.y,
-                anim.width,
-                anim.height
+            if (bossActive && warningTimer <= 0 && textures.boss) {
+                ctx.imageSmoothingEnabled = true;
+                ctx.webkitImageSmoothingEnabled = true;
+                ctx.mozImageSmoothingEnabled = true;
+                ctx.drawImage(
+                    textures.boss,
+                    bossPos.x,
+                    bossPos.y,
+                    bossSize,
+                    bossSize * 1.5
+                );
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(
+                    bossPos.x - 5,
+                    bossPos.y - 25,
+                    bossSize + 10,
+                    20
+                );
+                
+                const healthWidth = (bossSize * bossHealth) / bossMaxHealth;
+                ctx.fillStyle = bossHealth > bossMaxHealth * 0.5 ? 'lime' : 
+                                bossHealth > bossMaxHealth * 0.25 ? 'yellow' : 'red';
+                ctx.fillRect(
+                    bossPos.x,
+                    bossPos.y - 20,
+                    healthWidth,
+                    10
+                );
+                
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(
+                    `${bossHealth}/${bossMaxHealth}`,
+                    bossPos.x + bossSize/2,
+                    bossPos.y - 10
+                );
+                ctx.textAlign = 'left';
+            }
+            
+            bullets.forEach(bullet => {
+                if (!bullet) return;
+                
+                const texture = bullet.powered ? textures.bulletPowered : textures.bullet;
+                if (texture) {
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.webkitImageSmoothingEnabled = true;
+                    ctx.mozImageSmoothingEnabled = true;
+                    ctx.drawImage(
+                        texture,
+                        bullet.x,
+                        bullet.y,
+                        bullet.width,
+                        bullet.height
+                    );
+                }
+            });
+            
+            obstacles.forEach(obstacle => {
+                if (!obstacle || !textures.obstacle) return;
+                
+                ctx.imageSmoothingEnabled = true;
+                ctx.webkitImageSmoothingEnabled = true;
+                ctx.mozImageSmoothingEnabled = true;
+                ctx.drawImage(
+                    textures.obstacle,
+                    obstacle.x,
+                    obstacle.y,
+                    obstacleSize,
+                    obstacleSize * 1.4
+                );
+            });
+            
+            coins.forEach(coin => {
+                if (!coin || !textures.coin) return;
+                
+                ctx.imageSmoothingEnabled = true;
+                ctx.webkitImageSmoothingEnabled = true;
+                ctx.mozImageSmoothingEnabled = true;
+                ctx.drawImage(
+                    textures.coin,
+                    coin.x,
+                    coin.y,
+                    coinSize,
+                    coinSize * 1.4
+                );
+            });
+            
+            coins2.forEach(coin => {
+                if (!coin || !textures.coin2) return;
+                
+                ctx.imageSmoothingEnabled = true;
+                ctx.webkitImageSmoothingEnabled = true;
+                ctx.mozImageSmoothingEnabled = true;
+                ctx.drawImage(
+                    textures.coin2,
+                    coin.x,
+                    coin.y,
+                    coin2Size,
+                    coin2Size * 1.4
+                );
+            });
+            
+            bonuses.forEach(bonus => {
+                if (!bonus || !textures.heart) return;
+                
+                ctx.imageSmoothingEnabled = true;
+                ctx.webkitImageSmoothingEnabled = true;
+                ctx.mozImageSmoothingEnabled = true;
+                ctx.drawImage(
+                    textures.heart,
+                    bonus.x,
+                    bonus.y,
+                    bonusSize,
+                    bonusSize * 1.2
+                );
+            });
+            
+            let playerTexture;
+            const playerKey = `player${selectedCharacter}`;
+            const playerRedKey = `playerRed${selectedCharacter}`;
+            const playerGreenKey = `playerGreen${selectedCharacter}`;
+            const playerBlueKey = `playerBlue${selectedCharacter}`;
+            const playerBlueRedKey = `playerBlueRed${selectedCharacter}`;
+            const playerBlueGreenKey = `playerBlueGreen${selectedCharacter}`;
+            
+            if (damageTimer > 0) {
+                if (poweredUp) {
+                    playerTexture = textures.player[playerBlueRedKey] || textures.player[playerKey];
+                } else {
+                    playerTexture = textures.player[playerRedKey] || textures.player[playerKey];
+                }
+                damageTimer -= 1;
+            } else if (bonusTimer > 0) {
+                if (poweredUp) {
+                    playerTexture = textures.player[playerBlueGreenKey] || textures.player[playerKey];
+                } else {
+                    playerTexture = textures.player[playerGreenKey] || textures.player[playerKey];
+                }
+                bonusTimer -= 1;
+            } else if (poweredUp) {
+                playerTexture = textures.player[playerBlueKey] || textures.player[playerKey];
+            } else {
+                playerTexture = textures.player[playerKey];
+            }
+            
+            if (playerTexture) {
+                ctx.imageSmoothingEnabled = true;
+                ctx.webkitImageSmoothingEnabled = true;
+                ctx.mozImageSmoothingEnabled = true;
+                ctx.drawImage(
+                    playerTexture,
+                    playerPos.x,
+                    playerPos.y,
+                    playerSize,
+                    playerSize * 1.5
+                );
+            }
+            
+            if (textures.heart) {
+                for (let i = 0; i < lives; i++) {
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.webkitImageSmoothingEnabled = true;
+                    ctx.mozImageSmoothingEnabled = true;
+                    ctx.drawImage(
+                        textures.heart,
+                        10 + i * (gameWidth * 0.03),
+                        gameHeight * 0.07,
+                        lifeSize,
+                        lifeSize * 1.2
+                    );
+                }
+            }
+            
+            // Уровень сложности (всегда белый)
+            ctx.fillStyle = 'white';
+            ctx.font = `${gameHeight * 0.03}px Arial`;
+            const difficultyText = `Уровень сложности: ${1 + Math.floor(obstacleSpeedIncrease / 0.2)}`;
+            ctx.fillText(
+                difficultyText,
+                gameWidth - ctx.measureText(difficultyText).width - 10,
+                gameHeight * 0.05
             );
-            ctx.restore();
             
-            if (anim.timer <= 0 || anim.alpha <= 0) {
-                lifeAnimations.splice(i, 1);
+            // Усиление и перезарядка (могут менять цвет)
+            if (poweredUp) {
+                ctx.fillStyle = 'cyan';
+                const powerText = `Усиление: ${Math.floor(powerUpTimer / FPS) + 1}с`;
+                ctx.fillText(
+                    powerText,
+                    gameWidth / 2 - ctx.measureText(powerText).width / 2,
+                    gameHeight * 0.05
+                );
+            } else if (powerUpCooldown > 0) {
+                ctx.fillStyle = 'gray';
+                const cooldownText = `Перезарядка: ${Math.floor(powerUpCooldown / FPS) + 1}с`;
+                ctx.fillText(
+                    cooldownText,
+                    gameWidth / 2 - ctx.measureText(cooldownText).width / 2,
+                    gameHeight * 0.05
+                );
+            }
+            
+            if (difficultyTimer < FPS * 5) {
+                ctx.fillStyle = 'white';
+                const controlsText = isMobile || isTablet
+                    ? "Тап слева/справа: движение | Тап справа: стрельба" 
+                    : "Стрелки: движение | Пробел: стрельба | SHIFT: усиление | ESC: пауза";
+                ctx.fillText(
+                    controlsText,
+                    gameWidth / 2 - ctx.measureText(controlsText).width / 2,
+                    gameHeight - 50
+                );
+            }
+            
+            if (textures.heart) {
+                for (let i = lifeAnimations.length - 1; i >= 0; i--) {
+                    const anim = lifeAnimations[i];
+                    
+                    if (!anim) {
+                        lifeAnimations.splice(i, 1);
+                        continue;
+                    }
+                    
+                    anim.alpha -= 17;
+                    anim.timer -= 1;
+                    
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(anim.alpha, 0) / 255;
+                    ctx.drawImage(
+                        anim.image,
+                        anim.x,
+                        anim.y,
+                        anim.width,
+                        anim.height
+                    );
+                    ctx.restore();
+                    
+                    if (anim.timer <= 0 || anim.alpha <= 0) {
+                        lifeAnimations.splice(i, 1);
+                    }
+                }
+            }
+            
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                if (!p) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+                
+                p.x += p.dx;
+                p.y += p.dy;
+                p.life -= 1;
+                
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
             }
         }
-    }
-    
-    for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        if (!p) {
-            particles.splice(i, 1);
-            continue;
-        }
-        
-        p.x += p.dx;
-        p.y += p.dy;
-        p.life -= 1;
-        
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-        
-        if (p.life <= 0) {
-            particles.splice(i, 1);
-        }
-    }
-}
 
         function init() {
             canvas = document.getElementById('gameCanvas');
