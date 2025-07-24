@@ -116,11 +116,26 @@
             text-align: center;
             padding: 20px;
         }
+
+        .music-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 100;
+        }
     </style>
 </head>
 <body>
 
- <audio id="bgMusic" loop>
+    <audio id="bgMusic" loop>
         <source src="music/saund_statistik.mp3" type="audio/mpeg">
         Ваш браузер не поддерживает аудио элемент.
     </audio>
@@ -170,6 +185,10 @@
     </div>
     
     <div class="reset-btn" onclick="resetStats()">Сбросить статистику</div>
+
+    <div class="music-toggle" id="musicToggle">
+        <img src="image/volume-on.png" id="musicIcon" style="width: 30px; height: 30px;">
+    </div>
     
     <div class="orientation-warning">
         <img src="image/rotate.png" alt="Поверните устройство">
@@ -215,23 +234,7 @@
             }
         }
         
-        window.addEventListener('load', () => {
-            loadStats();
-            if (window.innerHeight > window.innerWidth) {
-                document.querySelector('.orientation-warning').style.display = 'flex';
-            }
-            lockOrientation();
-        });
-        
-        window.addEventListener('resize', () => {
-            if (window.innerHeight > window.innerWidth) {
-                document.querySelector('.orientation-warning').style.display = 'flex';
-            } else {
-                document.querySelector('.orientation-warning').style.display = 'none';
-            }
-        });
-
- // Управление музыкой
+        // Управление музыкой
         const bgMusic = document.getElementById('bgMusic');
         const musicToggle = document.getElementById('musicToggle');
         const musicIcon = document.getElementById('musicIcon');
@@ -239,8 +242,7 @@
         
         // Попытка автоматического воспроизведения музыки
         function initMusic() {
-            // В современных браузерах autoplay работает только если muted
-            bgMusic.muted = false;
+            bgMusic.volume = 0.3; // Установка комфортной громкости
             const playPromise = bgMusic.play();
             
             if (playPromise !== undefined) {
@@ -268,6 +270,22 @@
             isMusicPlaying = !isMusicPlaying;
         });
         
+        window.addEventListener('load', () => {
+            loadStats();
+            if (window.innerHeight > window.innerWidth) {
+                document.querySelector('.orientation-warning').style.display = 'flex';
+            }
+            lockOrientation();
+            initMusic();
+        });
+        
+        window.addEventListener('resize', () => {
+            if (window.innerHeight > window.innerWidth) {
+                document.querySelector('.orientation-warning').style.display = 'flex';
+            } else {
+                document.querySelector('.orientation-warning').style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
