@@ -1,1 +1,276 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="screen-orientation" content="landscape">
+    <title>Обучение - Вова: Охота за яйцами</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background-color: #000;
+            color: #fff;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background-image: url('image/background.jpg');
+            background-size: cover;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2vh 4vw;
+            width: 100%;
+        }
+        
+        .back-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            color: white;
+            font-size: 2.5vh;
+            padding: 1.5vh 3vw;
+            cursor: pointer;
+        }
+        
+        .title {
+            font-size: 4vh;
+            text-align: center;
+            margin: 2vh 0;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+        
+        .tutorial-content {
+            padding: 0 4vw;
+            width: 100%;
+            max-height: 70vh;
+            overflow-y: auto;
+            margin-bottom: 2vh;
+        }
+        
+        .tutorial-item {
+            background: rgba(0,0,0,0.6);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 2vh;
+            margin-bottom: 2vh;
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+        }
+        
+        .tutorial-icon {
+            width: 8vh;
+            height: 8vh;
+            margin-right: 2vh;
+            flex-shrink: 0;
+        }
+        
+        .tutorial-text {
+            font-size: 2vh;
+        }
+        
+        .tutorial-text h3 {
+            color: #4ca3af;
+            margin-bottom: 1vh;
+        }
+        
+        .orientation-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0,0,0,0.9);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .music-control {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 100;
+        }
+        
+        .music-control img {
+            width: 60%;
+            height: 60%;
+        }
+        
+        @media (max-width: 768px) {
+            .tutorial-item {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .tutorial-icon {
+                margin-right: 0;
+                margin-bottom: 2vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <audio id="bgMusic" loop>
+        <source src="music/" type="audio/mpeg">
+        Ваш браузер не поддерживает аудио элемент.
+    </audio>
+    
+    <div class="header">
+        <div class="back-btn" onclick="window.location.href='index.html'">Назад</div>
+    </div>
+    
+    <h1 class="title">Обучение</h1>
+    
+    <div class="tutorial-content">
+        <div class="tutorial-item">
+            <img src="image/player.png" class="tutorial-icon">
+            <div class="tutorial-text">
+                <h3>Управление персонажем</h3>
+                <p>Используйте кнопки слева и справа для движения.</p>
+            </div>
+        </div>
+        
+        <div class="tutorial-item">
+            <img src="image/bullet.png" class="tutorial-icon">
+            <div class="tutorial-text">
+                <h3>Стрельба</h3>
+                <p>Нажмите кнопку стрельбы (справа), чтобы стрелять по врагам.</p>
+            </div>
+        </div>
+        
+        <div class="tutorial-item">
+            <img src="image/coin.png" class="tutorial-icon">
+            <div class="tutorial-text">
+                <h3>Сбор яиц</h3>
+                <p>Собирайте синие яйца для получения 10 очков. Редкие яйца дают 20 очков!</p>
+            </div>
+        </div>
+        
+        <div class="tutorial-item">
+            <img src="image/obstacle.png" class="tutorial-icon">
+            <div class="tutorial-text">
+                <h3>Избегайте препятствий</h3>
+                <p>Столкновение с препятствиями отнимает 1 жизнь. У вас есть 3 жизни в начале игры.</p>
+            </div>
+        </div>
+        
+        <div class="tutorial-item">
+            <img src="image/boss.png" class="tutorial-icon">
+            <div class="tutorial-text">
+                <h3>Боссы</h3>
+                <p>После 100 очков появится босс! Стреляйте в него, чтобы победить. Боссы дают бонусные очки.</p>
+            </div>
+        </div>
+        
+        <div class="tutorial-item">
+            <img src="image/heart.png" class="tutorial-icon">
+            <div class="tutorial-text">
+                <h3>Бонусы</h3>
+                <p>Собирайте сердца, чтобы восстановить 1 жизнь (если у вас меньше 3 жизней).</p>
+            </div>
+        </div>
+        
+        <div class="tutorial-item">
+            <img src="image/bullet_blue.png" class="tutorial-icon">
+            <div class="tutorial-text">
+                <h3>Усиление</h3>
+                <p>Нажмите кнопку усиления, чтобы активировать временное усиление атаки на 10 секунд.</p>
+            </div>
+        </div>
+    </div>
 
+    <div class="music-toggle" id="musicToggle">
+        <img src="image/volume-on.png" id="musicIcon" style="width: 30px; height: 30px;">
+    </div>
+    
+    <div class="orientation-warning">
+        <img src="image/rotate.png" alt="Поверните устройство">
+        <p>Пожалуйста, поверните устройство в горизонтальное положение</p>
+    </div>
+    
+    <script>
+        function lockOrientation() {
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch(e => console.log(e));
+            }
+        }
+        
+        // Управление музыкой
+        const bgMusic = document.getElementById('bgMusic');
+        const musicToggle = document.getElementById('musicToggle');
+        const musicIcon = document.getElementById('musicIcon');
+        let isMusicPlaying = false;
+        
+        // Попытка автоматического воспроизведения музыки
+        function initMusic() {
+            bgMusic.volume = 0.3;
+            const playPromise = bgMusic.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(_ => {
+                    isMusicPlaying = true;
+                    musicIcon.src = 'image/volume-on.png';
+                })
+                .catch(error => {
+                    isMusicPlaying = false;
+                    musicIcon.src = 'image/volume-off.png';
+                    console.log("Автовоспроизведение заблокировано:", error);
+                });
+            }
+        }
+        
+        // Переключение музыки по клику
+        musicToggle.addEventListener('click', () => {
+            if (isMusicPlaying) {
+                bgMusic.pause();
+                musicIcon.src = 'image/volume-off.png';
+            } else {
+                bgMusic.play();
+                musicIcon.src = 'image/volume-on.png';
+            }
+            isMusicPlaying = !isMusicPlaying;
+        });
+        
+        window.addEventListener('load', () => {
+            if (window.innerHeight > window.innerWidth) {
+                document.querySelector('.orientation-warning').style.display = 'flex';
+            }
+            lockOrientation();
+            initMusic();
+        });
+        
+        window.addEventListener('resize', () => {
+            if (window.innerHeight > window.innerWidth) {
+                document.querySelector('.orientation-warning').style.display = 'flex';
+            } else {
+                document.querySelector('.orientation-warning').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
