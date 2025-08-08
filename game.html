@@ -588,6 +588,7 @@
                             setTimeout(() => {
                                 playSound(audio.bossDeath);
                                 addBoss();
+                                addScore(100);
                                 
                                 createParticles(
                                     bossPos.x + bossSize/2,
@@ -1545,3 +1546,4 @@
     </script>
 </body>
 </html>
+
