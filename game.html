@@ -30,6 +30,7 @@
             width: 100%;
             height: 100%;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             background-color: black;
@@ -238,6 +239,28 @@
                 display: flex;
             }
         }
+
+        #skipButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+        }
+
+        #skipButton:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        #loadingProgress {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #ccc;
+        }
     </style>
 </head>
 <body>
@@ -247,6 +270,8 @@
         
         <div id="loadingScreen">
             Загрузка игры...
+            <div id="loadingProgress"></div>
+            <button onclick="forceStartGame()" id="skipButton">Пропустить загрузку</button>
         </div>
         
         <div id="characterSelect">
@@ -289,6 +314,9 @@
         // Game constants
         const LIVES = 3;
         const FPS = 60;
+        
+        // Определение устройств
+        const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         
         // Game state
         let canvas, ctx;
@@ -817,10 +845,17 @@
         function playSound(sound) {
             if (sound) {
                 try {
-                    sound.currentTime = 0;
-                    const playPromise = sound.play();
-                    if (playPromise !== undefined) {
-                        playPromise.catch(e => console.log("Audio play error:", e));
+                    // Для iOS - создаем новый экземпляр
+                    if (iOS) {
+                        const newSound = sound.cloneNode();
+                        newSound.volume = sound.volume;
+                        newSound.play().catch(e => console.log("iOS audio play error:", e));
+                    } else {
+                        sound.currentTime = 0;
+                        const playPromise = sound.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(e => console.log("Audio play error:", e));
+                        }
                     }
                 } catch (e) {
                     console.log("Audio error:", e);
@@ -1005,71 +1040,137 @@
                 { name: 'boss', path: 'image/boss.png' },
                 { name: 'bullet', path: 'image/bullet.png' },
                 { name: 'bulletPowered', path: 'image/bullet_blue.png' },
-                { name: 'icon', path: 'image/icon.png' },
-                { name: 'coinSound', path: 'music/coin.mp3', audio: true },
-                { name: 'hitSound', path: 'music/hit.mp3', audio: true },
-                { name: 'bonusSound', path: 'music/bonus.mp3', audio: true },
-                { name: 'gameoverSound', path: 'music/gameover.mp3', audio: true },
-                { name: 'warningSound', path: 'music/warning.mp3', audio: true },
-                { name: 'shootSound', path: 'music/shoot.mp3', audio: true },
-                { name: 'bossDeathSound', path: 'music/boss_death.mp3', audio: true },
-                { name: 'powerupSound', path: 'music/powerup.mp3', audio: true },
-                { name: 'backgroundMusic', path: 'music/background.mp3', audio: true }
+                { name: 'icon', path: 'image/icon.png' }
+            ];
+            
+            const audioAssets = [
+                { name: 'coin', path: 'music/coin.mp3' },
+                { name: 'hit', path: 'music/hit.mp3' },
+                { name: 'bonus', path: 'music/bonus.mp3' },
+                { name: 'gameover', path: 'music/gameover.mp3' },
+                { name: 'warning', path: 'music/warning.mp3' },
+                { name: 'shoot', path: 'music/shoot.mp3' },
+                { name: 'bossDeath', path: 'music/boss_death.mp3' },
+                { name: 'powerup', path: 'music/powerup.mp3' },
+                { name: 'background', path: 'music/background.mp3' }
             ];
             
             let loaded = 0;
-            const totalAssets = assets.length;
+            const totalAssets = assets.length + audioAssets.length;
+            let hasError = false;
             
             function assetLoaded() {
                 loaded++;
-                if (loaded === totalAssets) {
-                    document.getElementById('loadingScreen').style.display = 'none';
-                    setupGame();
-                    showCharacterSelect();
-                    
-                    document.getElementById('char1Preview').src = 'image/player.png';
-                    document.getElementById('char2Preview').src = 'image/player1.png';
+                const progress = document.getElementById('loadingProgress');
+                if (progress) {
+                    progress.textContent = `Загружено: ${loaded}/${totalAssets}`;
+                }
+                console.log(`Loaded ${loaded}/${totalAssets} assets`);
+                
+                if (loaded >= totalAssets || hasError) {
+                    setTimeout(() => {
+                        document.getElementById('loadingScreen').style.display = 'none';
+                        setupGame();
+                        showCharacterSelect();
+                        
+                        document.getElementById('char1Preview').src = 'image/player.png';
+                        document.getElementById('char2Preview').src = 'image/player1.png';
+                    }, 500);
                 }
             }
             
+            function handleAssetError(assetPath) {
+                console.error(`Error loading asset: ${assetPath}`);
+                hasError = true;
+                assetLoaded();
+            }
+            
+            // Загрузка изображений с таймаутом
             assets.forEach(asset => {
-                if (asset.audio) {
-                    const sound = new Audio(asset.path);
-                    sound.oncanplaythrough = () => {
-                        audio[asset.name.replace('Sound', '').replace('Music', '')] = sound;
+                const img = new Image();
+                img.onload = () => {
+                    console.log(`Loaded image: ${asset.path}`);
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = img.width * 2;
+                    tempCanvas.height = img.height * 2;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    
+                    tempCtx.imageSmoothingEnabled = true;
+                    tempCtx.webkitImageSmoothingEnabled = true;
+                    tempCtx.mozImageSmoothingEnabled = true;
+                    tempCtx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    if (asset.name.startsWith('player')) {
+                        textures.player[asset.name] = tempCanvas;
+                    } else {
+                        textures[asset.name] = tempCanvas;
+                    }
+                    assetLoaded();
+                };
+                
+                img.onerror = () => handleAssetError(asset.path);
+                
+                // Таймаут для изображений
+                setTimeout(() => {
+                    if (!img.complete) {
+                        console.warn(`Timeout loading image: ${asset.path}`);
                         assetLoaded();
-                    };
-                    sound.onerror = () => {
-                        console.error(`Error loading audio: ${asset.path}`);
-                        assetLoaded();
-                    };
-                } else {
-                    const img = new Image();
-                    img.onload = () => {
-                        const tempCanvas = document.createElement('canvas');
-                        tempCanvas.width = img.width * 2;
-                        tempCanvas.height = img.height * 2;
-                        const tempCtx = tempCanvas.getContext('2d');
-                        
-                        tempCtx.imageSmoothingEnabled = true;
-                        tempCtx.webkitImageSmoothingEnabled = true;
-                        tempCtx.mozImageSmoothingEnabled = true;
-                        tempCtx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
-                        
-                        if (asset.name.startsWith('player')) {
-                            textures.player[asset.name] = tempCanvas;
-                        } else {
-                            textures[asset.name] = tempCanvas;
-                        }
-                        assetLoaded();
-                    };
-                    img.onerror = () => {
-                        console.error(`Error loading image: ${asset.path}`);
-                        assetLoaded();
-                    };
-                    img.src = asset.path;
-                }
+                    }
+                }, 10000);
+                
+                img.src = asset.path;
             });
+            
+            // Загрузка аудио с улучшенной обработкой для iOS
+            audioAssets.forEach(asset => {
+                const sound = new Audio();
+                
+                // Важные настройки для iOS
+                sound.preload = 'auto';
+                sound.load();
+                
+                const canPlayHandler = () => {
+                    console.log(`Loaded audio: ${asset.path}`);
+                    sound.removeEventListener('canplaythrough', canPlayHandler);
+                    audio[asset.name] = sound;
+                    assetLoaded();
+                };
+                
+                sound.addEventListener('canplaythrough', canPlayHandler);
+                sound.onerror = () => {
+                    console.error(`Error loading audio: ${asset.path}`);
+                    sound.removeEventListener('canplaythrough', canPlayHandler);
+                    assetLoaded();
+                };
+                
+                // Таймаут для аудио
+                setTimeout(() => {
+                    if (sound.readyState < 3) { // HAVE_FUTURE_DATA
+                        console.warn(`Timeout loading audio: ${asset.path}`);
+                        sound.removeEventListener('canplaythrough', canPlayHandler);
+                        assetLoaded();
+                    }
+                }, 15000);
+                
+                sound.src = asset.path;
+            });
+        }
+
+        function forceStartGame() {
+            console.log('Force starting game...');
+            document.getElementById('loadingScreen').style.display = 'none';
+            setupGame();
+            showCharacterSelect();
+            
+            // Пытаемся загрузить превью персонажей
+            setTimeout(() => {
+                try {
+                    document.getElementById('char1Preview').src = 'image/player.png';
+                    document.getElementById('char2Preview').src = 'image/player1.png';
+                } catch (e) {
+                    console.log('Error loading character previews:', e);
+                }
+            }, 1000);
         }
 
         function setupGame() {
@@ -1094,10 +1195,13 @@
             gameStats.totalGames++;
             updateStats();
             
-            if (audio.background) {
-                audio.background.loop = true;
-                audio.background.play().catch(e => console.log("Background music error:", e));
-            }
+           if (audio.background) {
+    const savedVolume = localStorage.getItem('musicVolume');
+    const volume = savedVolume ? parseInt(savedVolume) / 100 : 0.5;
+    audio.background.volume = volume;
+    audio.background.loop = true;
+    audio.background.play().catch(e => console.log("Background music error:", e));
+}
             
             let lastTime = 0;
             function gameLoop(timestamp) {
@@ -1592,6 +1696,14 @@
             // Для Android WebView и PWA
             document.addEventListener('pause', handleBlur, false); // Cordova/PhoneGap
             document.addEventListener('resume', handleFocus, false); // Cordova/PhoneGap
+            
+            // Таймаут всей загрузки
+            setTimeout(() => {
+                if (document.getElementById('loadingScreen').style.display !== 'none') {
+                    console.log('Global loading timeout reached');
+                    document.getElementById('skipButton').style.display = 'block';
+                }
+            }, 30000); // 30 секунд
             
             loadAssets();
             
