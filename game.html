@@ -437,6 +437,38 @@
             }
         }
 
+        // Обработчики для паузы при сворачивании приложения
+        function handleVisibilityChange() {
+            if (document.hidden) {
+                // Приложение свернуто или страница не видна
+                if (!paused && !gameOverFlag) {
+                    pauseGame();
+                }
+            }
+        }
+
+        function handleBlur() {
+            // Когда окно теряет фокус (например, при переключении приложений)
+            if (!paused && !gameOverFlag) {
+                pauseGame();
+            }
+        }
+
+        function handleFocus() {
+            // Когда окно получает фокус обратно
+            // Не возобновляем автоматически, чтобы пользователь сам решил
+        }
+
+        function handlePageHide() {
+            // Когда страница выгружается (например, при закрытии вкладки)
+            stopGame();
+        }
+
+        function handleBeforeUnload() {
+            // Перед закрытием страницы
+            stopGame();
+        }
+
         // Game functions
         function createObstacle() {
             return {
@@ -614,7 +646,10 @@
 
         function gameOver() {
             gameOverFlag = true;
-            cancelAnimationFrame(animationFrameId);
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
             
             if (audio.background) {
                 audio.background.pause();
@@ -648,18 +683,24 @@
             if (audio.background) {
                 audio.background.pause();
             }
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
             document.getElementById('pauseScreen').style.display = 'flex';
         }
 
         function resumeGame() {
+            if (gameOverFlag) return;
+            
             paused = false;
             if (audio.background) {
                 audio.background.play().catch(e => console.log("Background music error:", e));
             }
             document.getElementById('pauseScreen').style.display = 'none';
             
-            // Перезапускаем игровой цикл
-            if (!gameOverFlag) {
+            // Перезапускаем игровой цикл только если он не активен
+            if (!animationFrameId) {
                 let lastTime = performance.now();
                 function gameLoop(timestamp) {
                     if (!paused && !gameOverFlag) {
@@ -673,6 +714,29 @@
                 }
                 animationFrameId = requestAnimationFrame(gameLoop);
             }
+        }
+
+        // Функция для полной остановки игры
+        function stopGame() {
+            paused = true;
+            gameOverFlag = true;
+            
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
+            if (audio.background) {
+                audio.background.pause();
+            }
+            
+            // Останавливаем все звуки
+            Object.values(audio).forEach(sound => {
+                if (sound && typeof sound.pause === 'function') {
+                    sound.pause();
+                    sound.currentTime = 0;
+                }
+            });
         }
 
         function spawnObjects() {
@@ -1518,6 +1582,17 @@
             canvas.style.width = gameWidth + 'px';
             canvas.style.height = gameHeight + 'px';
             
+            // Добавляем обработчики событий видимости
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            window.addEventListener('blur', handleBlur);
+            window.addEventListener('focus', handleFocus);
+            window.addEventListener('pagehide', handlePageHide);
+            window.addEventListener('beforeunload', handleBeforeUnload);
+            
+            // Для Android WebView и PWA
+            document.addEventListener('pause', handleBlur, false); // Cordova/PhoneGap
+            document.addEventListener('resume', handleFocus, false); // Cordova/PhoneGap
+            
             loadAssets();
             
             window.addEventListener('keydown', handleKeyDown);
@@ -1546,5 +1621,3 @@
     </script>
 </body>
 </html>
-
-
