@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="screen-orientation" content="landscape">
+
+    <!-- 🔹 PWA meta -->
+    <meta name="theme-color" content="#000000">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Вова">
+
+    <title>Вова: Охота за яйцами</title>
+    <link rel="icon" href="image/player.ico" type="image/x-icon">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background-color: #000;
+            color: #fff;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url('image/background.jpg');
+            background-size: cover;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+        }
+        
+        .logo {
+            width: 20%;
+            max-width: 400px;
+            margin-bottom: 5vh;
+            animation: pulse 2s infinite;
+        }
+        
+        .btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            color: white;
+            font-size: 3vh;
+            padding: 2vh 4vw;
+            margin: 1.5vh 0;
+            width: 60%;
+            max-width: 300px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(5px);
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.25);
+        }
+        
+        /* Стили для экрана настроек */
+        .settings-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .settings-content {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            width: 80%;
+            max-width: 500px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .settings-title {
+            font-size: 4vh;
+            text-align: center;
+            margin-bottom: 30px;
+            color: #fff;
+        }
+        
+        .setting-item {
+            margin-bottom: 25px;
+        }
+        
+        .setting-label {
+            display: block;
+            font-size: 2.5vh;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        
+        .volume-slider {
+            width: 100%;
+            height: 35px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            outline: none;
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #4ca3af;
+            cursor: pointer;
+            border: 2px solid white;
+        }
+        
+        .volume-slider::-moz-range-thumb {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #4ca3af;
+            cursor: pointer;
+            border: 2px solid white;
+        }
+        
+        .volume-value {
+            text-align: center;
+            font-size: 2.5vh;
+            margin-top: 10px;
+            color: #4ca3af;
+            font-weight: bold;
+        }
+        
+        .music-select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 2.5vh;
+            margin-top: 5px;
+        }
+        
+        .music-select option {
+            background: #2a2a2a;
+            color: white;
+        }
+        
+        .back-btn {
+            background: rgba(76, 163, 175, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            color: white;
+            font-size: 2.5vh;
+            padding: 1.5vh 3vw;
+            margin-top: 20px;
+            width: 100%;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .back-btn:active {
+            transform: scale(0.95);
+            background: rgba(76, 163, 175, 0.9);
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .orientation-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0,0,0,0.9);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .orientation-warning img {
+            width: 100px;
+            margin-bottom: 30px;
+        }
+        
+        .orientation-warning p {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        @media(max-width:1000px){
+
+            .settings-content{
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px;
+            width: 70%;
+            max-width: 350px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            }
+
+            .setting-item {
+            margin-bottom: 10px;
+            }
+
+            .settings-title{
+            font-size: 4vh;
+            text-align: center;
+            margin-bottom: 15px;
+            color: #fff;
+            }
+            .back-btn{
+            background: rgba(76, 163, 175, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            color: white;
+            font-size: 2.5vh;
+            padding: 1.5vh 3vw;
+            margin-top: 15px;
+            width: 100%;
+            max-width: 250px;
+            height: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: block;     /* чтобы работало центрирование */
+            margin: 10px auto 5px;  /* выравнивание по центру */
+            }
+
+            .volume-value{
+            text-align: center;
+            font-size: 2.5vh;
+            margin-top: 5px;
+            color: #4ca3af;
+            font-weight: bold;
+            }
+
+            .volume-slider{
+            width: 100%;
+            height: 30px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            outline: none;
+            }
+
+            .music-select{
+            width: 100%;
+            height: 40px;
+            padding: 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 12px;
+            margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="image/player.png" alt="Логотип" class="logo">
+        <div class="btn" onclick="window.location.href='game.html'">Играть</div>
+        <div class="btn" onclick="window.location.href='stats.html'">Статистика</div>
+        <div class="btn" onclick="showSettings()">Настройки</div>
+    </div>
+    
+    <!-- Экран настроек -->
+    <div class="settings-screen" id="settingsScreen">
+        <div class="settings-content">
+            <h2 class="settings-title">Настройки</h2>
+            
+            <div class="setting-item">
+                <label class="setting-label">Громкость музыки:</label>
+                <input type="range" min="0" max="100" value="50" class="volume-slider" id="musicVolume">
+                <div class="volume-value" id="musicVolumeValue">50%</div>
+            </div>
+
+            <div class="setting-item">
+                <label class="setting-label">Громкость звуков:</label>
+                <input type="range" min="0" max="100" value="50" class="volume-slider" id="soundVolume">
+                <div class="volume-value" id="soundVolumeValue">50%</div>
+            </div>
+            
+            <div class="setting-item">
+                <label class="setting-label">Выбор музыки:</label>
+                <select class="music-select" id="musicSelect">
+                    <option value="classic">Классическая музыка</option>
+                    <option value="5x30">5x30</option>
+                </select>
+            </div>
+            
+            <div class="back-btn" onclick="hideSettings()">Назад</div>
+        </div>
+    </div>
+    
+    <div class="orientation-warning">
+        <img src="image/rotate.png" alt="Поверните устройство">
+        <p>Пожалуйста, поверните устройство в горизонтальное положение</p>
+    </div>
+    
+    <script>
+        // Функции для работы с настройками
+        function showSettings() {
+            document.getElementById('settingsScreen').style.display = 'flex';
+            // Загружаем сохраненные настройки
+            const savedMusic = localStorage.getItem('musicVolume');
+            const savedMusicType = localStorage.getItem('selectedMusic');
+            const savedSound = localStorage.getItem('soundVolume');
+            
+            if (savedMusic !== null) {
+                document.getElementById('musicVolume').value = savedMusic;
+                document.getElementById('musicVolumeValue').textContent = savedMusic + '%';
+            }
+            
+            if (savedSound !== null) {
+                document.getElementById('soundVolume').value = savedSound;
+                document.getElementById('soundVolumeValue').textContent = savedSound + '%';
+            }
+            
+            if (savedMusicType !== null) {
+                document.getElementById('musicSelect').value = savedMusicType;
+            }
+        }
+        
+        function hideSettings() {
+            document.getElementById('settingsScreen').style.display = 'none';
+        }
+        
+        // Обработчик изменения громкости
+        function setupVolumeControl() {
+            const musicSlider = document.getElementById('musicVolume');
+            const musicValue = document.getElementById('musicVolumeValue');
+            const musicSelect = document.getElementById('musicSelect');
+
+            const soundSlider = document.getElementById('soundVolume');
+            const soundValue = document.getElementById('soundVolumeValue');
+            
+            musicSlider.addEventListener('input', function() {
+                const volume = this.value;
+                musicValue.textContent = volume + '%';
+                
+                // Сохраняем настройку громкости музыки
+                localStorage.setItem('musicVolume', volume);
+            });
+            
+            musicSelect.addEventListener('change', function() {
+                // Сохраняем выбранную музыку
+                localStorage.setItem('selectedMusic', this.value);
+            });
+
+            soundSlider.addEventListener('input', function() {
+                const volume = this.value;
+                soundValue.textContent = volume + '%';
+
+                // Сохраняем настройку громкости звуков (эффектов)
+                localStorage.setItem('soundVolume', volume);
+
+                // опционально: проиграть тестовый звук, если он есть в проекте
+                testVolume(volume / 100);
+            });
+            
+            // Загружаем сохраненные настройки при запуске
+            const savedVolume = localStorage.getItem('musicVolume');
+            const savedMusic = localStorage.getItem('selectedMusic');
+            const savedSound = localStorage.getItem('soundVolume');
+            
+            if (savedVolume !== null) {
+                musicSlider.value = savedVolume;
+                musicValue.textContent = savedVolume + '%';
+            }
+            
+            if (savedMusic !== null) {
+                musicSelect.value = savedMusic;
+            }
+
+            if (savedSound !== null) {
+                soundSlider.value = savedSound;
+                soundValue.textContent = savedSound + '%';
+            }
+        }
+        
+        // Функция для тестирования громкости (опционально)
+        function testVolume(volume) {
+            // Создаем тестовый звук для проверки громкости, если файл есть
+            try {
+                const testSound = new Audio('');
+                testSound.volume = Math.max(0, Math.min(1, volume));
+                testSound.play().catch(e => {/* может блокироваться браузером до взаимодействия */});
+            } catch(e) {
+                console.log("Test sound error:", e);
+            }
+        }
+
+        function lockOrientation() {
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch(e => console.log(e));
+            }
+        }
+
+        // 🔹 Автоматический fullscreen при запуске
+        async function enterFullscreen() {
+            const el = document.documentElement;
+            try {
+                if (el.requestFullscreen) await el.requestFullscreen();
+                else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+                else if (el.msRequestFullscreen) await el.msRequestFullscreen();
+            } catch (err) {
+                console.log('Fullscreen error:', err);
+            }
+        }
+        
+        window.addEventListener('load', () => {
+            // Проверка ориентации
+            if (window.innerHeight > window.innerWidth) {
+                document.querySelector('.orientation-warning').style.display = 'flex';
+            }
+            lockOrientation();
+
+            // Включаем fullscreen сразу при загрузке
+            enterFullscreen();
+
+            // Инициализация статистики
+            if (!localStorage.getItem('gameStats')) {
+                localStorage.setItem('gameStats', JSON.stringify({
+                    totalCoins: 0,
+                    totalRareCoins: 0,
+                    totalScore: 0,
+                    totalDamage: 0,
+                    totalBosses: 0,
+                    totalGames: 0
+                }));
+            }
+            
+            // Инициализация настроек громкости и музыки
+            setupVolumeControl();
+
+            // 🔹 Регистрация Service Worker (для оффлайн и PWA)
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('✅ Service Worker зарегистрирован:', reg.scope))
+                    .catch(err => console.warn('⚠️ Ошибка регистрации Service Worker:', err));
+            }
+        });
+        
+        window.addEventListener('resize', () => {
+            if (window.innerHeight > window.innerWidth) {
+                document.querySelector('.orientation-warning').style.display = 'flex';
+            } else {
+                document.querySelector('.orientation-warning').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
