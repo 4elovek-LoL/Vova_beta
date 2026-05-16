@@ -163,6 +163,33 @@
             text-transform: uppercase;
         }
 
+        /* Стиль для кнопки Выйти в меню на экране паузы */
+        #pauseScreen #exitBtn {
+            background:  linear-gradient(to bottom, #137380, #2c7a85);
+            border: none !important;
+            color: white !important;
+            padding: 15px 32px !important;
+            text-align: center !important;
+            text-decoration: none !important;
+            display: inline-block !important;
+            font-size: 18px !important;
+            margin: 10px 0 !important;
+            cursor: pointer !important;
+            border-radius: 8px !important;
+            font-weight: bold !important;
+            width: 200px !important; /* Фиксированная ширина, чтобы кнопка была аккуратной */
+        }
+        #pauseScreen #exitBtn:active {
+            background: linear-gradient(to bottom, #41747a, #2c7a85);
+            transform: translateY(2px) !important;
+        }
+        
+        /* Чтобы кнопка "Продолжить" тоже не ломалась по ширине */
+        #pauseScreen .resumeBtn {
+            width: 200px !important;
+            font-weight: bold !important;
+        }
+
         /* --- КНОПКИ УПРАВЛЕНИЯ --- */
         .control-btn {
             /* ПО УМОЛЧАНИЮ СКРЫТЫ НА ПК */
@@ -226,6 +253,7 @@
                 display: flex;
             }
         }
+
     </style>
 </head>
 <body>
@@ -266,13 +294,16 @@
             <h1>ПАУЗА</h1>
             <p>Нажмите кнопку ниже чтобы продолжить</p>
             <button class="resumeBtn" onclick="resumeGame()">Продолжить</button>
+            <button class="resumeBtn" id="exitBtn" onclick="if(confirm('Вы уверены, что хотите выйти в главное меню? Текущий прогресс будет потерян.')) window.location.href='index.html'">Выйти в меню</button>
         </div>
         
         <div class="control-btn" id="leftBtn">←</div>
         <div class="control-btn" id="rightBtn">→</div>
         <div class="control-btn" id="shootBtn">⚡</div>
         <div class="control-btn" id="powerBtn">S</div>
+        <div id="exitBtn" onclick="if(confirm('Вы уверены, что хотите выйти в главное меню? Текущий прогресс будет потерян.')) window.location.href='index.html'">Выйти</div>
         <div class="control-btn" id="pauseBtn">II</div>
+        
     </div>
 
     <script>
@@ -548,7 +579,7 @@
             if (characterSelectActive) return;
             paused = true; pauseBackgroundMusic();
             if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
-            document.getElementById('pauseScreen').style.display = 'flex';
+            document.getElementById('pauseScreen').style.display = 'flex'; 
         }
 
         function resumeGame() {
@@ -580,9 +611,20 @@
 
         function spawnObjects() {
             if (difficultyTimer > 0 && difficultyTimer % (FPS * 30) === 0) obstacleSpeedIncrease += 0.2;
-            
+
             if (gameStats.currentGame.score > 0 && gameStats.currentGame.score % 100 === 0 && !bossActive) {
-                bossActive = true; bossPos = { x: gameWidth / 2 - bossSize / 2, y: -bossSize };
+                bossActive = true; 
+                
+                // Высчитываем безопасные границы, чтобы босс не вылезал за края
+                // Отступ слева: половина ширины босса
+                // Отступ справа: ширина экрана минус 1.5 ширины босса
+                const minX = bossSize / 2;
+                const maxX = gameWidth - (bossSize * 1.5);
+                
+                // Генерируем случайную позицию X в этих границах
+                const randomX = minX + Math.random() * (maxX - minX);
+                
+                bossPos = { x: randomX, y: -bossSize };
                 bossMaxHealth = 10 + Math.floor(gameStats.currentGame.score / 100) * 2;
                 bossHealth = bossMaxHealth; warningTimer = FPS * 2;
                 playSound(audio.warning); bossScatterTimer = 0; 
@@ -826,7 +868,8 @@
                 if (warningTimer > 0) {
                     warningTimer -= deltaFactor; if (warningTimer <= 0) bossPos.y = 0;
                 } else {
-                    if (bossPos.y < gameHeight * 0.2) bossPos.y += bossSpeed * deltaFactor;
+                    // Поднимаем босса повыше (останавливается на 8% высоты экрана вместо 20%)
+                    if (bossPos.y < gameHeight * 0.08) bossPos.y += bossSpeed * deltaFactor;
                     bossAttackTimer += deltaFactor;
                     if (bossAttackTimer >= FPS * 3) { spawnBossAttack(); bossAttackTimer = 0; }
                     bossScatterTimer += deltaFactor;
@@ -932,7 +975,9 @@
             if (bossActive && warningTimer <= 0 && textures.boss) {
                 ctx.imageSmoothingEnabled = true; ctx.webkitImageSmoothingEnabled = true; ctx.mozImageSmoothingEnabled = true;
                 ctx.drawImage(textures.boss, bossPos.x, bossPos.y, bossSize, bossSize * 1.5);
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; ctx.fillRect(bossPos.x - 5, bossPos.y - 25, bossSize + 10, 20);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; 
+                // Делаем черную подложку тоньше (отступы по 2px, высота 14 вместо 20)
+                ctx.fillRect(bossPos.x - 2, bossPos.y - 22, bossSize + 4, 14);
                 const healthWidth = (bossSize * bossHealth) / bossMaxHealth;
                 ctx.fillStyle = bossHealth > bossMaxHealth * 0.5 ? 'lime' : bossHealth > bossMaxHealth * 0.25 ? 'yellow' : 'red';
                 ctx.fillRect(bossPos.x, bossPos.y - 20, healthWidth, 10);
@@ -999,13 +1044,15 @@
             if (textures.heart) {
                 for (let i = 0; i < lives; i++) {
                     ctx.imageSmoothingEnabled = true; ctx.webkitImageSmoothingEnabled = true; ctx.mozImageSmoothingEnabled = true;
-                    ctx.drawImage(textures.heart, 10 + i * (gameWidth * 0.03), gameHeight * 0.07, lifeSize, lifeSize * 1.2);
+                    // Опускаем жизни вниз (отступ 50px + 2% высоты), чтобы не прятались за очками
+                    // И делаем адаптивный интервал (lifeSize + 10) между сердечками
+                    ctx.drawImage(textures.heart, 20 + i * (lifeSize + 10), 50 + gameHeight * 0.02, lifeSize, lifeSize * 1.2);
                 }
             }
 
             ctx.fillStyle = 'white'; ctx.font = `${gameHeight * 0.03}px Arial`;
             const difficultyText = `Уровень сложности: ${1 + Math.floor(obstacleSpeedIncrease / 0.2)}`;
-            ctx.fillText(difficultyText, gameWidth - ctx.measureText(difficultyText).width - 10, gameHeight * 0.05);
+            ctx.fillText(difficultyText, gameWidth - ctx.measureText(difficultyText).width - 100, Math.max(30, gameHeight * 0.05));
             
             if (poweredUp) {
                 ctx.fillStyle = 'cyan'; const powerText = `Усиление: ${Math.floor(powerUpTimer / FPS) + 1}с`;
