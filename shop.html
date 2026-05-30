@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Магазин скинов</title>
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        background-image: url('image/background.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }
+
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .header {
+        width: 100%;
+        padding: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .back-btn,
+    .btn {
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid rgba(255,255,255,0.2);
+        border-radius: 50px;
+        padding: 10px 16px;
+        color: #fff;
+        cursor: pointer;
+        transition: transform 0.2s ease, background 0.2s ease;
+        text-align: center;
+    }
+
+    .back-btn:hover,
+    .btn:hover {
+        transform: scale(1.02);
+        background: rgba(255,255,255,0.25);
+    }
+
+    #eggsTop {
+        font-size: 18px;
+    }
+
+    .content {
+        width: 100%;
+        max-width: 1000px;
+        padding: 20px;
+        box-sizing: border-box;
+        backdrop-filter: blur(10px);
+        background: rgba(0, 0, 0, 0.45);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 20px;
+        margin-bottom: 30px;
+    }
+
+    .content h2 {
+        margin-bottom: 16px;
+        color: #fff;
+    }
+
+    .grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        justify-content: center;
+    }
+
+    .skinCard {
+        background: rgba(255,255,255,0.08);
+        padding: 16px;
+        border-radius: 18px;
+        flex: 1 0 200px;
+        min-width: 180px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .skinCard img {
+        width: 140px;
+        height: 140px;
+        object-fit: contain;
+        border-radius: 12px;
+        background: #111;
+    }
+
+    .skinName {
+        margin-top: 10px;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    .skinPrice {
+        margin-top: 8px;
+        color: #4ca3af;
+        font-size: 14px;
+    }
+
+    .owned {
+        background: linear-gradient(to bottom, #4ca3af, #2c7a85);
+    }
+</style>
+</head>
+<body>
+    <div class="header">
+        <div class="back-btn" onclick="window.location.href='index.html'">Назад</div>
+        <div id="eggsTop">Яйца: 0</div>
+        <div class="btn" onclick="resetSelectedSkin()" style="font-size:16px;">Сбросить выбор</div>
+    </div>
+    <div class="content">
+        <h2>Магазин скинов</h2>
+        <div class="grid" id="skinsGrid"></div>
+    </div>
+<script>
+    // Helpers for per-user storage
+    function getUserPrefix() { const u = localStorage.getItem('currentUser'); return u ? (u + '_') : ''; }
+    function getEggsKey(){ const u = localStorage.getItem('currentUser'); return u ? `eggs_${u}` : 'eggs'; }
+    function getOwnedKey(){ const u = localStorage.getItem('currentUser'); return u ? `ownedSkins_${u}` : 'ownedSkins'; }
+    function getSelectedKey(){ const u = localStorage.getItem('currentUser'); return u ? `selectedSkin_${u}` : 'selectedSkin'; }
+
+    function readEggs(){ return parseInt(localStorage.getItem(getEggsKey())) || 0; }
+    function writeEggs(v){ localStorage.setItem(getEggsKey(), String(v)); updateEggsTop(); }
+    function updateEggsTop(){ document.getElementById('eggsTop').textContent = 'Яйца: ' + readEggs(); }
+
+    // ценообразование можно менять в словаре prices
+    const skinPrices = {
+        player_default: 0,
+        player_alt: 0
+    };
+    // каталог скинов, id должен совпадать с ключом в skinPrices, src - путь к картинке, name - отображаемое название
+    const catalog = [
+        {id:'player_alt', name:'Стандартный', src:'image/player1.png', price: skinPrices.player_alt},
+        {id:'player_default', name:'Турбо Вова', src:'image/player.png', price: skinPrices.player_default},
+    ];
+
+    function getOwned(){ try{ return JSON.parse(localStorage.getItem(getOwnedKey())||'[]'); }catch(e){return [];} }
+    function saveOwned(arr){ localStorage.setItem(getOwnedKey(), JSON.stringify(arr)); }
+
+    function isOwned(id){ return getOwned().indexOf(id) !== -1 || catalog.find(s=>s.id===id && (s.price === 0 || s.price === null)); }
+    function buySkin(id, price){ const eggs = readEggs(); if (eggs < price){ alert('Недостаточно яиц'); return; } const owned = getOwned(); if (owned.indexOf(id) === -1){ owned.push(id); saveOwned(owned); writeEggs(eggs - price); renderSkins(); } }
+    function selectSkin(id){ if (!isOwned(id) && catalog.find(s=>s.id===id && s.price>0)) { alert('Сначала купите скин'); return; } localStorage.setItem(getSelectedKey(), id); alert('Скин выбран'); renderSkins(); }
+    function resetSelectedSkin(){ localStorage.removeItem(getSelectedKey()); alert('Выбор сброшен'); renderSkins(); }
+
+    function renderSkins(){ const grid = document.getElementById('skinsGrid'); grid.innerHTML = ''; const owned = getOwned(); const selected = localStorage.getItem(getSelectedKey());
+        // render catalog
+        catalog.forEach(s=>{
+            const card = document.createElement('div'); card.className='skinCard';
+            const img = document.createElement('img'); img.src = s.src; card.appendChild(img);
+            const name = document.createElement('div'); name.className='skinName'; name.textContent = s.name; card.appendChild(name);
+            const price = document.createElement('div'); price.className='skinPrice'; price.textContent = s.price === 0 ? 'Бесплатно' : s.price + ' яиц'; card.appendChild(price);
+            const btn = document.createElement('div'); btn.className='btn';
+            if (selected === s.id){ btn.textContent='Выбран'; btn.classList.add('owned'); btn.onclick = ()=>{}; }
+            else if (owned.indexOf(s.id)!==-1 || s.price===0){ btn.textContent='Выбрать'; btn.classList.add('owned'); btn.onclick = ()=>selectSkin(s.id); }
+            else { btn.textContent='Купить'; btn.onclick = ()=>buySkin(s.id,s.price); }
+            card.appendChild(btn);
+            grid.appendChild(card);
+        });
+    }
+
+    // init
+    updateEggsTop(); renderSkins();
+</script>
+</body>
+</html>
